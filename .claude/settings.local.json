@@ -1,0 +1,19 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(streamlit run:*)",
+      "Bash(timeout:*)",
+      "Bash(exit 0)",
+      "Bash(python -m streamlit:*)",
+      "Bash(pip install:*)",
+      "Bash(python:*)",
+      "Bash(ren:*)",
+      "Bash(ls:*)",
+      "Bash(streamlit:*)",
+      "Bash(pip --version:*)",
+      "Bash(git init:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)"
+    ]
+  }
+}

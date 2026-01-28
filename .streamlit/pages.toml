@@ -1,0 +1,17 @@
+[sections."Lecture 2: Time Value of Money"]
+
+[[sections."Lecture 2: Time Value of Money".pages]]
+path = "future_value.py"
+name = "Future Value"
+
+[[sections."Lecture 2: Time Value of Money".pages]]
+path = "pages/1_present_value.py"
+name = "Present Value"
+
+[[sections."Lecture 2: Time Value of Money".pages]]
+path = "pages/2_annuity_formula.py"
+name = "Annuity Formula"
+
+[[sections."Lecture 2: Time Value of Money".pages]]
+path = "pages/3_perpetuity_formula.py"
+name = "Perpetuity Formula"
