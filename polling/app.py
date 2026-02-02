@@ -10,7 +10,7 @@ import qrcode
 from io import BytesIO
 import uuid
 from dataclasses import dataclass, field
-from typing import Dict, List
+from typing import Dict, List, Optional
 import time
 
 
@@ -60,7 +60,7 @@ def create_poll(question: str, options: List[str]) -> Poll:
     return poll
 
 
-def get_poll(poll_id: str) -> Poll | None:
+def get_poll(poll_id: str) -> Optional[Poll]:
     """Retrieve a poll by ID."""
     return get_poll_store().get(poll_id)
 
@@ -380,7 +380,6 @@ def render_results_display(poll_id: str):
 def main():
     st.set_page_config(
         page_title="Classroom Polling",
-        page_icon="",
         layout="wide" if 'results' not in st.query_params else "centered"
     )
 
