@@ -65,6 +65,15 @@ class Poll:
             self.votes = {opt: 0 for opt in self.options}
 
 
+@dataclass
+class PollGroup:
+    """Represents a group of related polls (multi-question poll)."""
+    id: str
+    name: str
+    poll_ids: List[str]
+    is_open: bool = False
+
+
 @st.cache_resource
 def get_poll_store() -> Dict[str, Poll]:
     """
@@ -72,6 +81,12 @@ def get_poll_store() -> Dict[str, Poll]:
     This allows votes from different students to be aggregated.
     Resets when the app restarts.
     """
+    return {}
+
+
+@st.cache_resource
+def get_poll_group_store() -> Dict[str, PollGroup]:
+    """Returns a shared dictionary for poll groups."""
     return {}
 
 
@@ -120,8 +135,9 @@ def has_voted(poll_id: str, session_id: str) -> bool:
 
 
 def clear_all_polls():
-    """Clear all polls and votes."""
+    """Clear all polls, poll groups, and votes."""
     get_poll_store().clear()
+    get_poll_group_store().clear()
     get_voter_store().clear()
 
 
@@ -132,6 +148,38 @@ def toggle_poll(poll_id: str) -> bool:
         poll.is_open = not poll.is_open
         return poll.is_open
     return False
+
+
+def create_poll_group(name: str, poll_ids: List[str]) -> PollGroup:
+    """Create a new poll group."""
+    group_id = str(uuid.uuid4())[:8]
+    group = PollGroup(id=group_id, name=name, poll_ids=poll_ids)
+    get_poll_group_store()[group_id] = group
+    return group
+
+
+def get_poll_group(group_id: str) -> Optional[PollGroup]:
+    """Retrieve a poll group by ID."""
+    return get_poll_group_store().get(group_id)
+
+
+def toggle_poll_group(group_id: str) -> bool:
+    """Toggle a poll group's open/closed state. Also toggles all polls in the group."""
+    group = get_poll_group(group_id)
+    if group:
+        group.is_open = not group.is_open
+        # Also toggle all polls in the group
+        for poll_id in group.poll_ids:
+            poll = get_poll(poll_id)
+            if poll:
+                poll.is_open = group.is_open
+        return group.is_open
+    return False
+
+
+def clear_all_poll_groups():
+    """Clear all poll groups."""
+    get_poll_group_store().clear()
 
 
 # =============================================================================
@@ -167,6 +215,18 @@ def get_results_url(poll_id: str, base_url: str) -> str:
     """Generate the results display URL for a poll."""
     base_url = base_url.rstrip('/')
     return f"{base_url}/?poll={poll_id}&results=1"
+
+
+def get_group_url(group_id: str, base_url: str) -> str:
+    """Generate the student voting URL for a poll group."""
+    base_url = base_url.rstrip('/')
+    return f"{base_url}/?group={group_id}"
+
+
+def get_group_results_url(group_id: str, base_url: str) -> str:
+    """Generate the results display URL for a poll group."""
+    base_url = base_url.rstrip('/')
+    return f"{base_url}/?group={group_id}&results=1"
 
 
 # =============================================================================
@@ -301,6 +361,90 @@ def render_teacher_dashboard():
                     results_url = get_results_url(poll_id, base_url)
                     st.markdown(f"**Full-screen results:** `{results_url}`")
 
+    # Poll Groups Section
+    st.header("Poll Groups (Multi-Question)")
+    st.markdown("Combine multiple polls - students answer one at a time, see results side by side.")
+
+    # Create poll group
+    polls = get_poll_store()
+    if len(polls) >= 2:
+        with st.form("create_group_form"):
+            group_name = st.text_input("Group Name", placeholder="Exercise 1")
+
+            # Let teacher select which polls to include
+            poll_options = {f"{p.question[:50]}..." if len(p.question) > 50 else p.question: pid
+                          for pid, p in polls.items()}
+            selected_polls = st.multiselect(
+                "Select polls to include (in order)",
+                options=list(poll_options.keys()),
+                help="Select 2 or more polls. Students will answer them in this order."
+            )
+
+            if st.form_submit_button("Create Poll Group", type="primary"):
+                if not group_name.strip():
+                    st.error("Please enter a group name.")
+                elif len(selected_polls) < 2:
+                    st.error("Please select at least 2 polls.")
+                else:
+                    selected_poll_ids = [poll_options[q] for q in selected_polls]
+                    group = create_poll_group(group_name.strip(), selected_poll_ids)
+                    st.success(f"Poll group created! ID: {group.id}")
+                    st.rerun()
+    else:
+        st.info("Create at least 2 polls first to make a poll group.")
+
+    # Display poll groups
+    poll_groups = get_poll_group_store()
+    if poll_groups:
+        for group_id, group in poll_groups.items():
+            status_indicator = "OPEN" if group.is_open else "CLOSED"
+            with st.expander(f"**{group.name}** ({len(group.poll_ids)} questions) [{status_indicator}]", expanded=True):
+                # Group status and control
+                gcol1, gcol2 = st.columns([2, 1])
+                with gcol1:
+                    if group.is_open:
+                        st.success("Group is OPEN - students can vote")
+                    else:
+                        st.warning("Group is CLOSED")
+                with gcol2:
+                    btn_label = "Close Group" if group.is_open else "Open Group"
+                    btn_type = "secondary" if group.is_open else "primary"
+                    if st.button(btn_label, key=f"toggle_group_{group_id}", type=btn_type):
+                        toggle_poll_group(group_id)
+                        st.rerun()
+
+                st.divider()
+
+                # Show questions in the group
+                st.markdown("**Questions in this group:**")
+                for i, pid in enumerate(group.poll_ids):
+                    p = get_poll(pid)
+                    if p:
+                        st.markdown(f"{i+1}. {p.question}")
+
+                col1, col2 = st.columns([1, 2])
+                with col1:
+                    # QR Code for group
+                    group_url = get_group_url(group_id, base_url)
+                    qr_image = generate_qr_code(group_url)
+                    st.image(qr_image, caption="Scan to vote", width=200)
+
+                    qr_download = generate_qr_code(group_url)
+                    st.download_button(
+                        "Download QR Code",
+                        data=qr_download,
+                        file_name=f"group_{group_id}_qr.png",
+                        mime="image/png",
+                        key=f"dl_group_{group_id}"
+                    )
+                    st.code(group_url, language=None)
+
+                with col2:
+                    # Combined results preview
+                    st.markdown("**Results preview:**")
+                    results_url = get_group_results_url(group_id, base_url)
+                    st.markdown(f"**Full-screen results:** `{results_url}`")
+
     # Reset button
     st.divider()
     if st.button("Clear All Polls", type="secondary"):
@@ -405,6 +549,116 @@ def render_results_display(poll_id: str):
     st.rerun()
 
 
+def render_group_voting(group_id: str):
+    """Render the student voting interface for a poll group (multi-question)."""
+    group = get_poll_group(group_id)
+    session_id = get_session_id()
+
+    if not group:
+        st.error("Poll group not found. Please check the link and try again.")
+        return
+
+    # Check if group is open
+    if not group.is_open:
+        st.title(group.name)
+        st.info("This poll is not yet open. Please wait for your instructor.")
+        time.sleep(3)
+        st.rerun()
+        return
+
+    # Find the first unanswered question
+    current_poll_idx = None
+    for i, poll_id in enumerate(group.poll_ids):
+        if not has_voted(poll_id, session_id):
+            current_poll_idx = i
+            break
+
+    # If all questions answered
+    if current_poll_idx is None:
+        st.title("Thank you!")
+        st.success(f"You have completed all {len(group.poll_ids)} questions in **{group.name}**.")
+        st.balloons()
+        return
+
+    # Show current question
+    current_poll_id = group.poll_ids[current_poll_idx]
+    poll = get_poll(current_poll_id)
+
+    if not poll:
+        st.error("Poll not found.")
+        return
+
+    st.title(f"{group.name}")
+    st.markdown(f"**Question {current_poll_idx + 1} of {len(group.poll_ids)}**")
+    st.progress((current_poll_idx) / len(group.poll_ids))
+
+    st.markdown(f"### {poll.question}")
+
+    # Voting buttons
+    st.markdown("**Select your answer:**")
+
+    for option in poll.options:
+        if st.button(option, key=f"vote_group_{option}", use_container_width=True):
+            success = cast_vote(current_poll_id, option, session_id)
+            if success:
+                st.success("Vote recorded!")
+                time.sleep(1)
+                st.rerun()
+            else:
+                st.warning("You have already voted on this question.")
+                st.rerun()
+
+
+def render_group_results(group_id: str):
+    """Render side-by-side results for a poll group."""
+    group = get_poll_group(group_id)
+
+    if not group:
+        st.error("Poll group not found.")
+        return
+
+    # Full-screen style
+    st.markdown("""
+        <style>
+        .block-container { padding-top: 2rem; }
+        h1 { font-size: 2.5rem !important; }
+        </style>
+    """, unsafe_allow_html=True)
+
+    st.title(group.name)
+
+    # Create columns for side-by-side display
+    cols = st.columns(len(group.poll_ids))
+
+    for i, (col, poll_id) in enumerate(zip(cols, group.poll_ids)):
+        poll = get_poll(poll_id)
+        if not poll:
+            continue
+
+        with col:
+            st.markdown(f"**Q{i+1}: {poll.question}**")
+
+            total_votes = sum(poll.votes.values())
+            st.markdown(f"Votes: {total_votes}")
+
+            if total_votes > 0:
+                chart_data = {opt.split('. ')[1] if '. ' in opt else opt: votes
+                             for opt, votes in poll.votes.items()}
+                st.bar_chart(chart_data, height=300)
+
+                # Show percentages
+                for opt, count in poll.votes.items():
+                    pct = count / total_votes * 100
+                    label = opt.split('. ')[0] if '. ' in opt else opt
+                    st.markdown(f"{label}: **{pct:.1f}%** ({count})")
+            else:
+                st.info("No votes yet")
+
+    # Auto-refresh
+    time.sleep(2)
+    st.rerun()
+
+
 # =============================================================================
 # Main App
 # =============================================================================
@@ -418,10 +672,15 @@ def main():
     # Get query parameters
     params = st.query_params.to_dict()
     poll_id = params.get("poll")
+    group_id = params.get("group")
     show_results = params.get("results")
 
     # Route to appropriate view
-    if poll_id and show_results:
+    if group_id and show_results:
+        render_group_results(group_id)
+    elif group_id:
+        render_group_voting(group_id)
+    elif poll_id and show_results:
         render_results_display(poll_id)
     elif poll_id:
         render_student_voting(poll_id)
