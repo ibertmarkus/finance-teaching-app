@@ -15,6 +15,38 @@ import time
 
 
 # =============================================================================
+# Configuration
+# =============================================================================
+
+# Change this password to something only you know
+TEACHER_PASSWORD = "teacher123"
+
+
+# =============================================================================
+# Authentication
+# =============================================================================
+
+def check_password() -> bool:
+    """Returns True if the user has entered the correct password."""
+    if st.session_state.get("authenticated"):
+        return True
+
+    st.title("Teacher Login")
+    st.markdown("Enter the password to access the teacher dashboard.")
+
+    password = st.text_input("Password", type="password")
+
+    if st.button("Login", type="primary"):
+        if password == TEACHER_PASSWORD:
+            st.session_state.authenticated = True
+            st.rerun()
+        else:
+            st.error("Incorrect password")
+
+    return False
+
+
+# =============================================================================
 # Shared State Management
 # =============================================================================
 
@@ -394,7 +426,9 @@ def main():
     elif poll_id:
         render_student_voting(poll_id)
     else:
-        render_teacher_dashboard()
+        # Teacher dashboard requires password
+        if check_password():
+            render_teacher_dashboard()
 
 
 if __name__ == "__main__":
