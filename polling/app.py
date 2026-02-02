@@ -25,6 +25,7 @@ class Poll:
     question: str
     options: List[str]
     votes: Dict[str, int] = field(default_factory=dict)
+    is_open: bool = False  # Polls start closed - teacher must open them
 
     def __post_init__(self):
         # Initialize vote counts for each option
@@ -90,6 +91,15 @@ def clear_all_polls():
     """Clear all polls and votes."""
     get_poll_store().clear()
     get_voter_store().clear()
+
+
+def toggle_poll(poll_id: str) -> bool:
+    """Toggle a poll's open/closed state. Returns new state."""
+    poll = get_poll(poll_id)
+    if poll:
+        poll.is_open = not poll.is_open
+        return poll.is_open
+    return False
 
 
 # =============================================================================
@@ -203,7 +213,25 @@ def render_teacher_dashboard():
         st.info("No active polls. Create one above!")
     else:
         for poll_id, poll in polls.items():
-            with st.expander(f"**{poll.question}** (ID: {poll_id})", expanded=True):
+            # Show status in expander title
+            status_indicator = "OPEN" if poll.is_open else "CLOSED"
+            with st.expander(f"**{poll.question}** [{status_indicator}]", expanded=True):
+                # Poll status and control at the top
+                status_col1, status_col2 = st.columns([2, 1])
+                with status_col1:
+                    if poll.is_open:
+                        st.success("Poll is OPEN - students can vote")
+                    else:
+                        st.warning("Poll is CLOSED - students see the question but cannot vote yet")
+                with status_col2:
+                    button_label = "Close Poll" if poll.is_open else "Open Poll"
+                    button_type = "secondary" if poll.is_open else "primary"
+                    if st.button(button_label, key=f"toggle_{poll_id}", type=button_type):
+                        toggle_poll(poll_id)
+                        st.rerun()
+
+                st.divider()
+
                 col1, col2 = st.columns([1, 2])
 
                 with col1:
@@ -261,6 +289,18 @@ def render_student_voting(poll_id: str):
 
     st.title("Vote")
     st.markdown(f"### {poll.question}")
+
+    # Check if poll is open
+    if not poll.is_open:
+        st.info("Poll is not yet open. Please wait for your instructor to open voting.")
+        st.markdown("---")
+        st.markdown("**Answer options:**")
+        for option in poll.options:
+            st.markdown(f"- {option}")
+        # Auto-refresh to check when poll opens
+        time.sleep(3)
+        st.rerun()
+        return
 
     # Check if already voted
     if has_voted(poll_id, session_id):
