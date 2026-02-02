@@ -380,12 +380,13 @@ def render_results_display(poll_id: str):
 def main():
     st.set_page_config(
         page_title="Classroom Polling",
-        layout="wide" if 'results' not in st.query_params else "centered"
+        layout="wide"
     )
 
     # Get query parameters
-    poll_id = st.query_params.get("poll")
-    show_results = st.query_params.get("results")
+    params = st.query_params.to_dict()
+    poll_id = params.get("poll")
+    show_results = params.get("results")
 
     # Route to appropriate view
     if poll_id and show_results:
