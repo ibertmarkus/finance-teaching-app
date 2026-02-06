@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Finance Teaching Tools</title>
+
+  <!-- Styles -->
+  <link rel="stylesheet" href="css/styles.css">
+
+  <!-- KaTeX -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+
+  <!-- Chart.js + annotation plugin -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@3.0.1/dist/chartjs-plugin-annotation.min.js"></script>
+
+  <!-- App scripts -->
+  <script src="js/common.js"></script>
+  <script src="js/future-value.js"></script>
+  <script src="js/present-value.js"></script>
+  <script src="js/annuity.js"></script>
+  <script src="js/perpetuity.js"></script>
+  <script src="js/irr.js"></script>
+</head>
+<body>
+
+<!-- ===== Tab Navigation ===== -->
+<nav class="tab-nav">
+  <span class="nav-group-label">Lecture 2: Time Value of Money</span>
+  <button data-tab="tab-fv" class="active">Future Value</button>
+  <button data-tab="tab-pv">Present Value</button>
+  <button data-tab="tab-annuity">Annuity</button>
+  <button data-tab="tab-perpetuity">Perpetuity</button>
+  <span class="nav-group-label">Lecture 4: Valuing Investments</span>
+  <button data-tab="tab-irr">IRR</button>
+</nav>
+
+<!-- ============================================================ -->
+<!-- TAB 1: FUTURE VALUE                                          -->
+<!-- ============================================================ -->
+<section id="tab-fv" class="tab-panel active">
+  <div class="page-header">
+    <h1>Future Value: FV = PV &times; (1+r)<sup>t</sup></h1>
+    <p>If I invest PV dollars today at an interest rate r, how many dollars will I have after t years?</p>
+  </div>
+
+  <div class="two-col">
+    <!-- Inputs -->
+    <div class="input-panel">
+      <h2>Parameters</h2>
+
+      <div class="scenario-label">Scenario 1</div>
+      <div class="input-group">
+        <label>Initial Investment ($)</label>
+        <input type="number" id="fv-pv1" value="100" min="0" max="1000000" step="10" oninput="fvUpdate()">
+      </div>
+      <div class="input-group">
+        <label>Annual Interest Rate (%)</label>
+        <input type="number" id="fv-r1" value="5" min="0" max="100" step="0.5" oninput="fvUpdate()">
+      </div>
+      <div class="input-group">
+        <label>Investment Period (years)</label>
+        <input type="number" id="fv-t1" value="15" min="1" max="100" step="1" oninput="fvUpdate()">
+      </div>
+      <div class="metric" id="fv-metric1">
+        <div class="metric-label">Future Value</div>
+        <div class="metric-value" id="fv-result1">—</div>
+      </div>
+
+      <hr class="scenario-divider">
+      <div class="scenario-label">Scenario 2 (Optional)</div>
+      <div class="input-group">
+        <label>Initial Investment ($)</label>
+        <input type="number" id="fv-pv2" value="0" min="0" max="1000000" step="10" oninput="fvUpdate()">
+      </div>
+      <div class="input-group">
+        <label>Annual Interest Rate (%)</label>
+        <input type="number" id="fv-r2" value="7" min="0" max="100" step="0.5" oninput="fvUpdate()">
+      </div>
+      <div class="input-group">
+        <label>Investment Period (years)</label>
+        <input type="number" id="fv-t2" value="15" min="1" max="100" step="1" oninput="fvUpdate()">
+      </div>
+      <div class="metric inactive" id="fv-metric2">
+        <div class="metric-label">Future Value</div>
+        <div class="metric-value" id="fv-result2">—</div>
+      </div>
+
+      <hr class="scenario-divider">
+      <div class="scenario-label">Scenario 3 (Optional)</div>
+      <div class="input-group">
+        <label>Initial Investment ($)</label>
+        <input type="number" id="fv-pv3" value="0" min="0" max="1000000" step="10" oninput="fvUpdate()">
+      </div>
+      <div class="input-group">
+        <label>Annual Interest Rate (%)</label>
+        <input type="number" id="fv-r3" value="10" min="0" max="100" step="0.5" oninput="fvUpdate()">
+      </div>
+      <div class="input-group">
+        <label>Investment Period (years)</label>
+        <input type="number" id="fv-t3" value="15" min="1" max="100" step="1" oninput="fvUpdate()">
+      </div>
+      <div class="metric inactive" id="fv-metric3">
+        <div class="metric-label">Future Value</div>
+        <div class="metric-value" id="fv-result3">—</div>
+      </div>
+    </div>
+
+    <!-- Chart -->
+    <div class="chart-panel">
+      <div style="position:relative;height:400px"><canvas id="fv-chart"></canvas></div>
+    </div>
+  </div>
+
+  <!-- Table -->
+  <details>
+    <summary>View Year-by-Year Details (Scenario 1)</summary>
+    <div class="details-content" id="fv-table-body"></div>
+  </details>
+</section>
+
+<!-- ============================================================ -->
+<!-- TAB 2: PRESENT VALUE                                         -->
+<!-- ============================================================ -->
+<section id="tab-pv" class="tab-panel">
+  <div class="page-header">
+    <h1>Present Value: PV = FV / (1+r)<sup>t</sup></h1>
+    <p>If I want FV dollars in t years at an interest rate r, how much do I need to invest today?</p>
+  </div>
+
+  <div class="two-col">
+    <div class="input-panel">
+      <h2>Parameters</h2>
+
+      <div class="scenario-label">Scenario 1</div>
+      <div class="input-group">
+        <label>Future Value Desired ($)</label>
+        <input type="number" id="pv-fv1" value="100" min="0" max="1000000" step="10" oninput="pvUpdate()">
+      </div>
+      <div class="input-group">
+        <label>Annual Interest Rate (%)</label>
+        <input type="number" id="pv-r1" value="5" min="0" max="100" step="0.5" oninput="pvUpdate()">
+      </div>
+      <div class="input-group">
+        <label>Investment Period (years)</label>
+        <input type="number" id="pv-t1" value="15" min="1" max="100" step="1" oninput="pvUpdate()">
+      </div>
+      <div class="metric" id="pv-metric1">
+        <div class="metric-label">Present Value Needed</div>
+        <div class="metric-value" id="pv-result1">—</div>
+      </div>
+
+      <hr class="scenario-divider">
+      <div class="scenario-label">Scenario 2 (Optional)</div>
+      <div class="input-group">
+        <label>Future Value Desired ($)</label>
+        <input type="number" id="pv-fv2" value="0" min="0" max="1000000" step="10" oninput="pvUpdate()">
+      </div>
+      <div class="input-group">
+        <label>Annual Interest Rate (%)</label>
+        <input type="number" id="pv-r2" value="7" min="0" max="100" step="0.5" oninput="pvUpdate()">
+      </div>
+      <div class="input-group">
+        <label>Investment Period (years)</label>
+        <input type="number" id="pv-t2" value="15" min="1" max="100" step="1" oninput="pvUpdate()">
+      </div>
+      <div class="metric inactive" id="pv-metric2">
+        <div class="metric-label">Present Value Needed</div>
+        <div class="metric-value" id="pv-result2">—</div>
+      </div>
+
+      <hr class="scenario-divider">
+      <div class="scenario-label">Scenario 3 (Optional)</div>
+      <div class="input-group">
+        <label>Future Value Desired ($)</label>
+        <input type="number" id="pv-fv3" value="0" min="0" max="1000000" step="10" oninput="pvUpdate()">
+      </div>
+      <div class="input-group">
+        <label>Annual Interest Rate (%)</label>
+        <input type="number" id="pv-r3" value="10" min="0" max="100" step="0.5" oninput="pvUpdate()">
+      </div>
+      <div class="input-group">
+        <label>Investment Period (years)</label>
+        <input type="number" id="pv-t3" value="15" min="1" max="100" step="1" oninput="pvUpdate()">
+      </div>
+      <div class="metric inactive" id="pv-metric3">
+        <div class="metric-label">Present Value Needed</div>
+        <div class="metric-value" id="pv-result3">—</div>
+      </div>
+    </div>
+
+    <div class="chart-panel">
+      <div style="position:relative;height:400px"><canvas id="pv-chart"></canvas></div>
+    </div>
+  </div>
+
+  <details>
+    <summary>View Year-by-Year Growth from Present Value to Future Value (Scenario 1)</summary>
+    <div class="details-content" id="pv-table-body"></div>
+  </details>
+</section>
+
+<!-- ============================================================ -->
+<!-- TAB 3: ANNUITY                                               -->
+<!-- ============================================================ -->
+<section id="tab-annuity" class="tab-panel">
+  <div class="page-header">
+    <h1>Annuity Formula</h1>
+    <p>Calculate the present value of receiving C dollars at the end of each period for t periods</p>
+  </div>
+
+  <div class="formula-section">
+    <h3>Formula</h3>
+    <div class="formula-block" id="ann-formula-static"></div>
+    <p style="text-align:center;font-size:0.9rem;color:#495057">where C = cash flow per period, r = interest rate per period, t = number of periods</p>
+  </div>
+
+  <div class="two-col" style="margin-top:1.5rem">
+    <div class="input-panel">
+      <h2>Parameters</h2>
+      <div class="input-group">
+        <label>Cash Flow per Period ($)</label>
+        <input type="number" id="ann-cf" value="100" min="0" max="100000" step="10" oninput="annuityUpdate()">
+      </div>
+      <div class="input-group">
+        <label>Interest Rate per Period (%)</label>
+        <input type="number" id="ann-r" value="5" min="0.01" max="100" step="0.5" oninput="annuityUpdate()">
+      </div>
+      <div class="input-group">
+        <label>Number of Periods</label>
+        <input type="number" id="ann-t" value="10" min="1" max="100" step="1" oninput="annuityUpdate()">
+      </div>
+      <div class="metric">
+        <div class="metric-label">Present Value of Annuity</div>
+        <div class="metric-value" id="ann-result">—</div>
+      </div>
+    </div>
+
+    <div class="chart-panel">
+      <div style="position:relative;height:400px"><canvas id="ann-chart"></canvas></div>
+    </div>
+  </div>
+
+  <div class="formula-section" style="margin-top:1.5rem">
+    <h3>Calculation</h3>
+    <div class="formula-block" id="ann-formula-dynamic"></div>
+    <div class="formula-block" id="ann-formula-expanded"></div>
+    <div class="formula-block" id="ann-formula-result"></div>
+  </div>
+
+  <details>
+    <summary>View Period-by-Period Breakdown</summary>
+    <div class="details-content" id="ann-table-body"></div>
+  </details>
+
+  <details>
+    <summary>Mathematical Derivation (Geometric Series)</summary>
+    <div class="details-content" id="ann-derivation">
+      <div class="derivation-step">
+        <p>The present value of an annuity is the sum of the present values of each individual payment:</p>
+        <p><strong>Equation (1):</strong></p>
+        <div class="formula-block" id="ann-deriv-1"></div>
+      </div>
+      <div class="derivation-step">
+        <p>Now multiply both sides by (1+r):</p>
+        <p><strong>Equation (2):</strong></p>
+        <div class="formula-block" id="ann-deriv-2"></div>
+      </div>
+      <div class="derivation-step">
+        <p>Subtract Equation (1) from Equation (2). Notice that most terms cancel:</p>
+        <div class="formula-block" id="ann-deriv-3"></div>
+      </div>
+      <div class="derivation-step">
+        <p>Factor out PV on the left side:</p>
+        <div class="formula-block" id="ann-deriv-4"></div>
+      </div>
+      <div class="derivation-step">
+        <p>Factor out C on the right side:</p>
+        <div class="formula-block" id="ann-deriv-5"></div>
+      </div>
+      <div class="derivation-step">
+        <p>Divide both sides by r:</p>
+        <div class="formula-block" id="ann-deriv-6"></div>
+      </div>
+      <div class="derivation-step">
+        <p>Distribute the division by r:</p>
+        <div class="formula-block" id="ann-deriv-7"></div>
+      </div>
+      <p><strong>This is our annuity formula!</strong></p>
+    </div>
+  </details>
+</section>
+
+<!-- ============================================================ -->
+<!-- TAB 4: PERPETUITY                                            -->
+<!-- ============================================================ -->
+<section id="tab-perpetuity" class="tab-panel">
+  <div class="page-header">
+    <h1>Perpetuity Formula</h1>
+    <p>Calculate the present value of receiving C dollars at the end of each period forever</p>
+  </div>
+
+  <div class="formula-section">
+    <h3>Formula</h3>
+    <div class="formula-block" id="perp-formula-static"></div>
+    <p style="text-align:center;font-size:0.9rem;color:#495057">where C = cash flow per period, r = interest rate per period</p>
+  </div>
+
+  <div class="two-col" style="margin-top:1.5rem">
+    <div class="input-panel">
+      <h2>Parameters</h2>
+      <div class="input-group">
+        <label>Cash Flow per Period ($)</label>
+        <input type="number" id="perp-cf" value="100" min="0" max="100000" step="10" oninput="perpUpdate()">
+      </div>
+      <div class="input-group">
+        <label>Interest Rate per Period (%)</label>
+        <input type="number" id="perp-r" value="5" min="0.01" max="100" step="0.5" oninput="perpUpdate()">
+      </div>
+      <div class="input-group">
+        <label>Periods to Display (for visualization)</label>
+        <input type="number" id="perp-max" value="50" min="10" max="200" step="10" oninput="perpUpdate()">
+      </div>
+      <div class="metric">
+        <div class="metric-label">Present Value of Perpetuity</div>
+        <div class="metric-value" id="perp-result">—</div>
+      </div>
+    </div>
+
+    <div class="chart-panel">
+      <div style="position:relative;height:400px"><canvas id="perp-chart"></canvas></div>
+    </div>
+  </div>
+
+  <div class="formula-section" style="margin-top:1.5rem">
+    <h3>Calculation</h3>
+    <div class="formula-block" id="perp-formula-dynamic"></div>
+    <div class="formula-block" id="perp-formula-expanded"></div>
+    <div class="formula-block" id="perp-formula-result"></div>
+  </div>
+
+  <details>
+    <summary>View Period-by-Period Breakdown</summary>
+    <div class="details-content" id="perp-table-body"></div>
+  </details>
+
+  <details>
+    <summary>Mathematical Derivation (Limit of Annuity Formula)</summary>
+    <div class="details-content" id="perp-derivation">
+      <div class="derivation-step">
+        <p>A perpetuity is simply an annuity that lasts forever (t &rarr; &infin;). Starting with the annuity formula:</p>
+        <div class="formula-block" id="perp-deriv-1"></div>
+      </div>
+      <div class="derivation-step">
+        <p>Take the limit as t approaches infinity:</p>
+        <div class="formula-block" id="perp-deriv-2"></div>
+      </div>
+      <div class="derivation-step">
+        <p>Since (1+r) &gt; 1 when r &gt; 0, as t &rarr; &infin;, the term (1+r)<sup>t</sup> &rarr; &infin;, which means:</p>
+        <div class="formula-block" id="perp-deriv-3"></div>
+      </div>
+      <div class="derivation-step">
+        <p>Therefore:</p>
+        <div class="formula-block" id="perp-deriv-4"></div>
+      </div>
+      <p><strong>This is our perpetuity formula!</strong></p>
+      <p><strong>Intuition:</strong> Each additional payment gets discounted more and more, so even though there are infinite payments, they sum to a finite present value.</p>
+    </div>
+  </details>
+</section>
+
+<!-- ============================================================ -->
+<!-- TAB 5: IRR                                                   -->
+<!-- ============================================================ -->
+<section id="tab-irr" class="tab-panel">
+  <div class="page-header">
+    <h1>Internal Rate of Return (IRR)</h1>
+    <p>The <strong>Internal Rate of Return (IRR)</strong> is the discount rate that makes the Net Present Value (NPV)
+    of an investment equal to zero. In other words, it's the rate at which the present value of cash
+    inflows equals the present value of cash outflows.</p>
+  </div>
+
+  <div class="formula-section">
+    <h3>Formula</h3>
+    <div class="formula-block" id="irr-formula-static"></div>
+    <p style="text-align:center;font-size:0.9rem;color:#495057">where the IRR is the value of r that solves this equation</p>
+  </div>
+
+  <div class="two-col" style="margin-top:1.5rem">
+    <div class="input-panel">
+      <h2>Cash Flows</h2>
+      <div class="input-group">
+        <label>Number of Periods (including t=0)</label>
+        <div style="display:flex;gap:0.5rem;align-items:center">
+          <button class="btn" onclick="irrChangePeriods(-1)">&minus;</button>
+          <input type="number" id="irr-num-periods" value="5" min="2" max="20" step="1"
+                 style="width:70px;text-align:center" oninput="irrBuildInputs()">
+          <button class="btn" onclick="irrChangePeriods(1)">+</button>
+        </div>
+      </div>
+
+      <div class="cf-inputs-container" id="irr-cf-inputs"></div>
+
+      <hr class="scenario-divider">
+      <h3 style="font-size:1rem;margin-bottom:0.5rem">Results</h3>
+      <div id="irr-results"></div>
+    </div>
+
+    <div class="chart-panel">
+      <div style="position:relative;height:400px"><canvas id="irr-chart"></canvas></div>
+    </div>
+  </div>
+
+  <details>
+    <summary>Understanding IRR</summary>
+    <div class="details-content">
+      <h3>What is IRR?</h3>
+      <p>The Internal Rate of Return represents the "break-even" discount rate for an investment:</p>
+      <ul>
+        <li>If your required rate of return is <strong>less than the IRR</strong>, the investment has <strong>positive NPV</strong> &rarr; Accept</li>
+        <li>If your required rate of return is <strong>greater than the IRR</strong>, the investment has <strong>negative NPV</strong> &rarr; Reject</li>
+        <li>At the IRR, you're indifferent (NPV = 0)</li>
+      </ul>
+
+      <h3 style="margin-top:1rem">Key Points</h3>
+      <ol>
+        <li><strong>Multiple IRRs</strong>: Some cash flow patterns can have multiple IRRs (you'll see multiple dots where the curve crosses zero)</li>
+        <li><strong>No IRR</strong>: Some cash flows may not have an IRR at all</li>
+        <li><strong>Decision Rule</strong>: Generally, accept projects where IRR &gt; required return</li>
+      </ol>
+
+      <h3 style="margin-top:1rem">Interpreting the Graph</h3>
+      <ul>
+        <li>The curve shows how NPV changes as you vary the discount rate</li>
+        <li>Red dots mark where NPV = 0 (these are the IRR values)</li>
+        <li>When the curve is above zero, NPV is positive at that discount rate</li>
+        <li>When the curve is below zero, NPV is negative at that discount rate</li>
+      </ul>
+    </div>
+  </details>
+</section>
+
+<!-- ===== Initialization ===== -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  // Wait for KaTeX to load, then render static formulas and init calculators
+  function init() {
+    if (typeof katex === 'undefined') {
+      setTimeout(init, 100);
+      return;
+    }
+
+    // Static formulas
+    katex.render(
+      'PV = C \\times \\left(\\frac{1}{r} - \\frac{1}{r(1+r)^t}\\right)',
+      document.getElementById('ann-formula-static'),
+      { displayMode: true }
+    );
+    katex.render(
+      'PV = \\frac{C}{r}',
+      document.getElementById('perp-formula-static'),
+      { displayMode: true }
+    );
+    katex.render(
+      'NPV = \\sum_{t=0}^{T} \\frac{CF_t}{(1+r)^t} = 0',
+      document.getElementById('irr-formula-static'),
+      { displayMode: true }
+    );
+
+    // Annuity derivation
+    katex.render('PV = \\frac{C}{1+r} + \\frac{C}{(1+r)^2} + \\frac{C}{(1+r)^3} + \\cdots + \\frac{C}{(1+r)^t}', document.getElementById('ann-deriv-1'), { displayMode: true });
+    katex.render('PV(1+r) = C + \\frac{C}{1+r} + \\frac{C}{(1+r)^2} + \\cdots + \\frac{C}{(1+r)^{t-1}}', document.getElementById('ann-deriv-2'), { displayMode: true });
+    katex.render('PV(1+r) - PV = C - \\frac{C}{(1+r)^t}', document.getElementById('ann-deriv-3'), { displayMode: true });
+    katex.render('PV \\cdot r = C - \\frac{C}{(1+r)^t}', document.getElementById('ann-deriv-4'), { displayMode: true });
+    katex.render('PV \\cdot r = C\\left(1 - \\frac{1}{(1+r)^t}\\right)', document.getElementById('ann-deriv-5'), { displayMode: true });
+    katex.render('PV = \\frac{C}{r}\\left(1 - \\frac{1}{(1+r)^t}\\right)', document.getElementById('ann-deriv-6'), { displayMode: true });
+    katex.render('PV = C \\times \\left(\\frac{1}{r} - \\frac{1}{r(1+r)^t}\\right)', document.getElementById('ann-deriv-7'), { displayMode: true });
+
+    // Perpetuity derivation
+    katex.render('PV_{annuity} = C \\times \\left(\\frac{1}{r} - \\frac{1}{r(1+r)^t}\\right)', document.getElementById('perp-deriv-1'), { displayMode: true });
+    katex.render('\\lim_{t \\to \\infty} PV_{annuity} = C \\times \\left(\\frac{1}{r} - \\lim_{t \\to \\infty}\\frac{1}{r(1+r)^t}\\right)', document.getElementById('perp-deriv-2'), { displayMode: true });
+    katex.render('\\lim_{t \\to \\infty}\\frac{1}{r(1+r)^t} = 0', document.getElementById('perp-deriv-3'), { displayMode: true });
+    katex.render('PV_{perpetuity} = C \\times \\left(\\frac{1}{r} - 0\\right) = \\frac{C}{r}', document.getElementById('perp-deriv-4'), { displayMode: true });
+
+    // Initialize all calculators
+    fvUpdate();
+    pvUpdate();
+    annuityUpdate();
+    perpUpdate();
+    irrBuildInputs(); // also calls irrUpdate()
+  }
+
+  init();
+});
+</script>
+
+</body>
+</html>
