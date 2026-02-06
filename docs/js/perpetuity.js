@@ -47,7 +47,7 @@ function perpUpdate() {
           position: 'start',
           backgroundColor: 'rgba(255,255,255,0.85)',
           color: 'red',
-          font: { size: 11 }
+          font: { size: 14 }
         }
       }
     }

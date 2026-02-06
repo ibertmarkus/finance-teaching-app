@@ -26,10 +26,10 @@ function baseChartOptions(title, xLabel, yLabel) {
       title: {
         display: true,
         text: title,
-        font: { size: 14, weight: 'bold' }
+        font: { size: 20, weight: 'bold' }
       },
       legend: {
-        labels: { font: { size: 11 } }
+        labels: { font: { size: 14 } }
       },
       tooltip: {
         callbacks: {
@@ -41,13 +41,13 @@ function baseChartOptions(title, xLabel, yLabel) {
     },
     scales: {
       x: {
-        title: { display: true, text: xLabel, font: { size: 12, weight: 'bold' } },
-        ticks: { font: { size: 10 } }
+        title: { display: true, text: xLabel, font: { size: 16, weight: 'bold' } },
+        ticks: { font: { size: 14 } }
       },
       y: {
-        title: { display: true, text: yLabel, font: { size: 12, weight: 'bold' } },
+        title: { display: true, text: yLabel, font: { size: 16, weight: 'bold' } },
         ticks: {
-          font: { size: 10 },
+          font: { size: 14 },
           callback: function(value) { return '$' + value.toLocaleString(); }
         }
       }
