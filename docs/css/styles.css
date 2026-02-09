@@ -276,6 +276,14 @@ details .details-content {
   font-variant-numeric: tabular-nums;
 }
 
+/* Keep FV/PV detail columns centered under headers for easier scanning */
+#fv-table-body .data-table th:not(:first-child),
+#fv-table-body .data-table td:not(:first-child),
+#pv-table-body .data-table th:not(:first-child),
+#pv-table-body .data-table td:not(:first-child) {
+  text-align: center;
+}
+
 /* ===== IRR Specific ===== */
 .cf-inputs-container {
   max-height: 400px;
