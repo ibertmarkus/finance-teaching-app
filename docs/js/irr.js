@@ -160,6 +160,7 @@ function irrUpdate() {
     borderColor: COLORS.blue,
     backgroundColor: COLORS.blue,
     pointRadius: 0,
+    showLine: true,
     borderWidth: 2,
     tension: 0.1
   }];
