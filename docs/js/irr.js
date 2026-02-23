@@ -187,7 +187,7 @@ function irrUpdate() {
   }
 
   irrChart = new Chart(ctx, {
-    type: 'scatter',
+    type: 'line',
     data: { datasets },
     options: opts
   });
