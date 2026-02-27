@@ -23,6 +23,7 @@
   <script src="js/annuity.js"></script>
   <script src="js/perpetuity.js"></script>
   <script src="js/irr.js"></script>
+  <script src="js/efficient-frontier.js"></script>
 </head>
 <body>
 
@@ -35,6 +36,8 @@
   <button data-tab="tab-perpetuity">Perpetuity</button>
   <span class="nav-group-label">Lecture 4: Valuing Investments</span>
   <button data-tab="tab-irr">IRR</button>
+  <span class="nav-group-label">Lecture 5: Risk &amp; Return</span>
+  <button data-tab="tab-ef">Efficient Frontier</button>
 </nav>
 
 <!-- ============================================================ -->
@@ -442,6 +445,130 @@
   </details>
 </section>
 
+<!-- ============================================================ -->
+<!-- TAB 6: EFFICIENT FRONTIER                                     -->
+<!-- ============================================================ -->
+<section id="tab-ef" class="tab-panel">
+  <div class="page-header">
+    <h1>Mean-Variance Efficient Frontier</h1>
+    <p>Explore how expected returns, volatilities, and correlations shape the set of optimal portfolios.
+       The <strong>efficient frontier</strong> shows the highest expected return achievable for each level of risk.</p>
+  </div>
+
+  <div class="two-col" style="margin-top:1.5rem">
+    <div class="input-panel">
+      <h2>Assets</h2>
+      <div class="input-group">
+        <label>Number of Assets</label>
+        <div style="display:flex;gap:0.5rem;align-items:center">
+          <button class="btn" onclick="efChangeAssets(-1)">&minus;</button>
+          <input type="number" id="ef-num-assets" value="2" min="2" max="8" step="1"
+                 style="width:70px;text-align:center" oninput="efBuildInputs()">
+          <button class="btn" onclick="efChangeAssets(1)">+</button>
+        </div>
+      </div>
+
+      <div id="ef-asset-inputs"></div>
+
+      <hr class="scenario-divider">
+      <h2>Correlations</h2>
+      <div id="ef-corr-inputs"></div>
+
+      <hr class="scenario-divider">
+      <div id="ef-mvp-info"></div>
+    </div>
+
+    <div class="chart-panel">
+      <div style="position:relative;height:450px"><canvas id="ef-chart"></canvas></div>
+    </div>
+  </div>
+
+  <details>
+    <summary>Understanding the Efficient Frontier</summary>
+    <div class="details-content">
+      <h3>What is it?</h3>
+      <p>The efficient frontier is the set of portfolios that offer the highest expected return
+         for a given level of risk (standard deviation), or equivalently, the lowest risk for a given
+         expected return. It's the upper boundary of the "bullet" shape in mean-variance space.</p>
+
+      <h3 style="margin-top:1rem">Key Concepts</h3>
+      <ul>
+        <li><strong>Minimum Variance Portfolio (MVP)</strong>: The leftmost point on the frontier &mdash;
+            the portfolio with the lowest possible risk regardless of return.</li>
+        <li><strong>Diversification</strong>: When correlations are less than 1, combining assets
+            reduces portfolio risk below the weighted average of individual risks.</li>
+        <li><strong>Short Selling</strong>: Portfolio weights can be negative (short positions),
+            which extends the frontier beyond the range of individual asset returns.</li>
+      </ul>
+
+      <h3 style="margin-top:1rem">How is the Efficient Frontier Constructed?</h3>
+      <p>We want to find, for each target expected return <span id="ef-deriv-mup-inline"></span>, the portfolio
+         with the lowest possible variance. This is a constrained optimization problem.</p>
+
+      <div class="derivation-step">
+        <p><strong>Step 1: Setup.</strong> With <em>N</em> assets, define:</p>
+        <ul>
+          <li><span id="ef-deriv-mu-vec"></span> = vector of expected returns</li>
+          <li><span id="ef-deriv-sigma-mat"></span> = <em>N</em>&times;<em>N</em> covariance matrix</li>
+          <li><span id="ef-deriv-w-vec"></span> = vector of portfolio weights</li>
+          <li><span id="ef-deriv-ones-vec"></span> = vector of ones</li>
+        </ul>
+      </div>
+
+      <div class="derivation-step">
+        <p><strong>Step 2: Optimization problem.</strong> For a target return <span id="ef-deriv-mup-inline2"></span>, solve:</p>
+        <div class="formula-block" id="ef-deriv-objective"></div>
+        <p>subject to:</p>
+        <div class="formula-block" id="ef-deriv-constraint1"></div>
+        <div class="formula-block" id="ef-deriv-constraint2"></div>
+        <p>The first constraint sets the portfolio return equal to the target.
+           The second ensures the weights sum to one.</p>
+      </div>
+
+      <div class="derivation-step">
+        <p><strong>Step 3: Lagrangian.</strong> Introduce multipliers <span id="ef-deriv-lambda-inline"></span>:</p>
+        <div class="formula-block" id="ef-deriv-lagrangian"></div>
+      </div>
+
+      <div class="derivation-step">
+        <p><strong>Step 4: First-order condition.</strong> Take the derivative with respect to <strong>w</strong> and set it to zero:</p>
+        <div class="formula-block" id="ef-deriv-foc"></div>
+        <p>which gives us the optimal weights:</p>
+        <div class="formula-block" id="ef-deriv-wstar"></div>
+      </div>
+
+      <div class="derivation-step">
+        <p><strong>Step 5: Solve for the multipliers.</strong> Substitute back into the two constraints and define three scalars:</p>
+        <div class="formula-block" id="ef-deriv-scalars"></div>
+        <p>Solving the system of two equations yields:</p>
+        <div class="formula-block" id="ef-deriv-lambdas"></div>
+        <p>where <span id="ef-deriv-D-inline"></span>.</p>
+      </div>
+
+      <div class="derivation-step">
+        <p><strong>Step 6: The frontier equation.</strong> Substituting back, the minimum portfolio variance for target return
+           <span id="ef-deriv-mup-inline3"></span> is:</p>
+        <div class="formula-block" id="ef-deriv-frontier-eq"></div>
+        <p>This is a <strong>parabola</strong> in (<span id="ef-deriv-var-inline"></span>, <span id="ef-deriv-mup-inline4"></span>) space,
+           or equivalently a <strong>hyperbola</strong> in (&sigma;, <span id="ef-deriv-mup-inline5"></span>) space &mdash;
+           which is the bullet shape you see in the chart.</p>
+      </div>
+
+      <div class="derivation-step">
+        <p><strong>Minimum Variance Portfolio.</strong> Setting <span id="ef-deriv-dsigma"></span> = 0 gives:</p>
+        <div class="formula-block" id="ef-deriv-mvp"></div>
+      </div>
+
+      <h3 style="margin-top:1rem">Try This</h3>
+      <ol>
+        <li>Start with 2 assets and change the correlation from +1 to &minus;1. Watch the frontier bend left.</li>
+        <li>Add a 3rd asset with low correlation to the others. See how the frontier shifts.</li>
+        <li>Hover over the frontier curve to see the portfolio weights at each point.</li>
+      </ol>
+    </div>
+  </details>
+</section>
+
 <!-- ===== Initialization ===== -->
 <script>
 document.addEventListener('DOMContentLoaded', function() {
@@ -484,12 +611,62 @@ document.addEventListener('DOMContentLoaded', function() {
     katex.render('\\lim_{t \\to \\infty}\\frac{1}{r(1+r)^t} = 0', document.getElementById('perp-deriv-3'), { displayMode: true });
     katex.render('PV_{perpetuity} = C \\times \\left(\\frac{1}{r} - 0\\right) = \\frac{C}{r}', document.getElementById('perp-deriv-4'), { displayMode: true });
 
+    // Efficient Frontier derivation formulas
+    const efInline = { displayMode: false };
+    const efBlock  = { displayMode: true };
+
+    katex.render('\\mu_p', document.getElementById('ef-deriv-mup-inline'), efInline);
+    katex.render('\\boldsymbol{\\mu}', document.getElementById('ef-deriv-mu-vec'), efInline);
+    katex.render('\\boldsymbol{\\Sigma}', document.getElementById('ef-deriv-sigma-mat'), efInline);
+    katex.render('\\mathbf{w}', document.getElementById('ef-deriv-w-vec'), efInline);
+    katex.render('\\mathbf{1}', document.getElementById('ef-deriv-ones-vec'), efInline);
+    katex.render('\\mu_p', document.getElementById('ef-deriv-mup-inline2'), efInline);
+    katex.render('\\lambda_1, \\lambda_2', document.getElementById('ef-deriv-lambda-inline'), efInline);
+    katex.render('D = BC - A^2', document.getElementById('ef-deriv-D-inline'), efInline);
+    katex.render('\\mu_p', document.getElementById('ef-deriv-mup-inline3'), efInline);
+    katex.render('\\sigma_p^2', document.getElementById('ef-deriv-var-inline'), efInline);
+    katex.render('\\mu_p', document.getElementById('ef-deriv-mup-inline4'), efInline);
+    katex.render('\\mu_p', document.getElementById('ef-deriv-mup-inline5'), efInline);
+    katex.render('d\\sigma_p^2 / d\\mu_p', document.getElementById('ef-deriv-dsigma'), efInline);
+
+    katex.render(
+      '\\min_{\\mathbf{w}} \\; \\mathbf{w}^\\top \\boldsymbol{\\Sigma} \\, \\mathbf{w}',
+      document.getElementById('ef-deriv-objective'), efBlock);
+    katex.render(
+      '\\mathbf{w}^\\top \\boldsymbol{\\mu} = \\mu_p',
+      document.getElementById('ef-deriv-constraint1'), efBlock);
+    katex.render(
+      '\\mathbf{w}^\\top \\mathbf{1} = 1',
+      document.getElementById('ef-deriv-constraint2'), efBlock);
+    katex.render(
+      '\\mathcal{L} = \\mathbf{w}^\\top \\boldsymbol{\\Sigma} \\, \\mathbf{w} - \\lambda_1 (\\mathbf{w}^\\top \\boldsymbol{\\mu} - \\mu_p) - \\lambda_2 (\\mathbf{w}^\\top \\mathbf{1} - 1)',
+      document.getElementById('ef-deriv-lagrangian'), efBlock);
+    katex.render(
+      '2 \\boldsymbol{\\Sigma} \\, \\mathbf{w} - \\lambda_1 \\boldsymbol{\\mu} - \\lambda_2 \\mathbf{1} = \\mathbf{0}',
+      document.getElementById('ef-deriv-foc'), efBlock);
+    katex.render(
+      '\\mathbf{w}^* = \\frac{1}{2} \\boldsymbol{\\Sigma}^{-1} (\\lambda_1 \\boldsymbol{\\mu} + \\lambda_2 \\mathbf{1})',
+      document.getElementById('ef-deriv-wstar'), efBlock);
+    katex.render(
+      'A = \\mathbf{1}^\\top \\boldsymbol{\\Sigma}^{-1} \\boldsymbol{\\mu}, \\quad B = \\boldsymbol{\\mu}^\\top \\boldsymbol{\\Sigma}^{-1} \\boldsymbol{\\mu}, \\quad C = \\mathbf{1}^\\top \\boldsymbol{\\Sigma}^{-1} \\mathbf{1}',
+      document.getElementById('ef-deriv-scalars'), efBlock);
+    katex.render(
+      '\\lambda_1 = \\frac{2(C \\mu_p - A)}{D}, \\quad \\lambda_2 = \\frac{2(B - A \\mu_p)}{D}',
+      document.getElementById('ef-deriv-lambdas'), efBlock);
+    katex.render(
+      '\\sigma_p^2 = \\frac{C \\mu_p^2 - 2A \\mu_p + B}{D}',
+      document.getElementById('ef-deriv-frontier-eq'), efBlock);
+    katex.render(
+      '\\mu_{\\text{MVP}} = \\frac{A}{C}, \\qquad \\sigma^2_{\\text{MVP}} = \\frac{1}{C}',
+      document.getElementById('ef-deriv-mvp'), efBlock);
+
     // Initialize all calculators
     fvUpdate();
     pvUpdate();
     annuityUpdate();
     perpUpdate();
     irrBuildInputs(); // also calls irrUpdate()
+    efBuildInputs();  // also calls efUpdate()
   }
 
   init();
