@@ -225,8 +225,8 @@ function efComputeFrontier(mu, cov) {
 
       const muMax = Math.max(...mu);
       const range = (muMax - Math.min(...mu)) || 0.05;
-      const sweepLo = mvpMu - range * 0.5;
-      const sweepHi = muMax + range * 0.8;
+      const sweepLo = Math.min(mvpMu - range * 1.5, 0);
+      const sweepHi = muMax + range * 1.5;
       const nPoints = 200;
 
       const frontier = [];
@@ -468,7 +468,8 @@ function efUpdate() {
         ticks: {
           font: { size: 14 },
           callback: v => v.toFixed(0) + '%'
-        }
+        },
+        suggestedMin: 0
       }
     }
   };
