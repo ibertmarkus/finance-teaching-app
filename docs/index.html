@@ -574,7 +574,7 @@
         <div class="formula-block" id="ef-deriv-mvp"></div>
       </div>
 
-      <h3 style="margin-top:1.5rem">Capital Allocation Line &amp; Tangency Portfolio</h3>
+      <h3 style="margin-top:1.5rem">Capital Market Line &amp; Tangency Portfolio</h3>
 
       <p>When investors can also hold a <strong>risk-free asset</strong> (earning return <span id="ef-deriv-rf-inline"></span>),
          the set of efficient portfolios changes dramatically.</p>
@@ -593,7 +593,7 @@
       </div>
 
       <div class="derivation-step">
-        <p><strong>Capital Allocation Line (CAL).</strong> Any combination of the risk-free asset and the
+        <p><strong>Capital Market Line (CML).</strong> Any combination of the risk-free asset and the
            tangency portfolio traces a straight line in (&sigma;, E[R]) space:</p>
         <div class="formula-block" id="ef-deriv-cal"></div>
         <p>This line has the steepest slope of any line from <span id="ef-deriv-rf-inline2"></span> to the frontier, which is
@@ -611,7 +611,7 @@
         <li>Start with 2 assets and change the correlation from +1 to &minus;1. Watch the frontier bend left.</li>
         <li>Add a 3rd asset with low correlation to the others. See how the frontier shifts.</li>
         <li>Hover over the frontier curve to see the portfolio weights at each point.</li>
-        <li>Enable the risk-free asset and see how the CAL extends from r<sub>f</sub> through the tangency portfolio.</li>
+        <li>Enable the risk-free asset and see how the CML extends from r<sub>f</sub> through the tangency portfolio.</li>
         <li>Raise r<sub>f</sub> until it exceeds all asset returns &mdash; the tangency portfolio becomes infeasible.</li>
       </ol>
     </div>
@@ -709,7 +709,7 @@ document.addEventListener('DOMContentLoaded', function() {
       '\\mu_{\\text{MVP}} = \\frac{A}{C}, \\qquad \\sigma^2_{\\text{MVP}} = \\frac{1}{C}',
       document.getElementById('ef-deriv-mvp'), efBlock);
 
-    // CAL & Tangency derivation formulas
+    // CML & Tangency derivation formulas
     katex.render('r_f', document.getElementById('ef-deriv-rf-inline'), efInline);
     katex.render('r_f', document.getElementById('ef-deriv-rf-inline2'), efInline);
     katex.render(

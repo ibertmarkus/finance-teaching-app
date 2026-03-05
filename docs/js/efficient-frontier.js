@@ -457,15 +457,17 @@ function efUpdate() {
     order: 3
   });
 
-  // CAL line and tangency point (when risk-free enabled)
+  // CML line and tangency point (when risk-free enabled)
   if (rfEnabled && tangency) {
-    // Extend CAL past tangency to 1.5× the tangency sigma
-    const calMaxSigma = Math.max(tangency.tanSigma * 1.8, Math.max(...sigma) * 1.3);
+    // Cap CML so it doesn't blow up the y-axis: use max return from frontier/assets + padding
+    const maxMuData = Math.max(...frontier.map(p => p.mu), ...mu);
+    const cmlMaxMu = maxMuData + (maxMuData - Math.min(...mu)) * 0.3;
+    const cmlMaxSigma = (cmlMaxMu - rfRate) / tangency.calSlope;
     datasets.push({
-      label: 'Capital Allocation Line',
+      label: 'Capital Market Line',
       data: [
         { x: 0, y: rfRate * 100 },
-        { x: calMaxSigma * 100, y: (rfRate + tangency.calSlope * calMaxSigma) * 100 }
+        { x: cmlMaxSigma * 100, y: cmlMaxMu * 100 }
       ],
       borderColor: COLORS.red,
       borderDash: [8, 4],
@@ -562,7 +564,7 @@ function efUpdate() {
             }
 
             // Show Sharpe ratio on CAL hover
-            if (ds.label === 'Capital Allocation Line' && tangency) {
+            if (ds.label === 'Capital Market Line' && tangency) {
               text += `  (Sharpe = ${tangency.calSlope.toFixed(3)})`;
             }
 
