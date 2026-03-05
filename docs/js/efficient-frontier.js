@@ -484,10 +484,11 @@ function efUpdate() {
       label: 'Tangency Portfolio',
       data: [{ x: tangency.tanSigma * 100, y: tangency.tanMu * 100 }],
       backgroundColor: COLORS.red,
-      borderColor: '#fff',
+      borderColor: COLORS.red,
       borderWidth: 2,
       pointRadius: 9,
       pointStyle: 'star',
+      pointBorderColor: '#fff',
       showLine: false,
       order: 0
     });
