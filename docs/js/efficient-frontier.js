@@ -479,15 +479,14 @@ function efUpdate() {
       order: 4
     });
 
-    // Tangency point
+    // Tangency point — mirror the individual-asset config (which renders reliably)
     datasets.push({
       label: 'Tangency Portfolio',
       data: [{ x: tangency.tanSigma * 100, y: tangency.tanMu * 100 }],
-      backgroundColor: COLORS.red,
-      borderColor: COLORS.red,
-      borderWidth: 1,
+      backgroundColor: '#d62728',
+      borderColor: '#d62728',
       pointRadius: 10,
-      pointStyle: 'rectRot',
+      pointStyle: 'triangle',
       showLine: false,
       order: 0
     });
