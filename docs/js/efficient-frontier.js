@@ -324,23 +324,97 @@ function efComputeFrontierSweep(mu, cov) {
 }
 
 
+/* ── Tangency portfolio (risk-free asset) ────────────────────────────── */
+
+/**
+ * Compute the tangency (max Sharpe ratio) portfolio.
+ * @param {number[]} mu       - asset expected returns (decimals)
+ * @param {number[][]} cov    - NxN covariance matrix
+ * @param {number} rf         - risk-free rate (decimal)
+ * @param {object|null} frontierResult - output of efComputeFrontier (used for sweep fallback)
+ * @returns {{ tanMu, tanSigma, tanWeights, calSlope }|null}
+ */
+function efComputeTangency(mu, cov, rf, frontierResult) {
+  const n = mu.length;
+
+  // If rf >= all asset returns, tangency is infeasible
+  if (mu.every(m => m <= rf + 1e-10)) return null;
+
+  // Analytical path: w_tan = Σ⁻¹(μ - rf·1) / [1'·Σ⁻¹·(μ - rf·1)]
+  const covInv = matInverse(cov);
+  if (covInv) {
+    const excessMu = mu.map(m => m - rf);
+    const z = matVecMul(covInv, excessMu);           // Σ⁻¹ (μ - rf·1)
+    const sumZ = z.reduce((s, v) => s + v, 0);       // 1' · z
+
+    if (Math.abs(sumZ) > 1e-12) {
+      const tanWeights = z.map(v => v / sumZ);
+      let tanMu = 0, tanVar = 0;
+      for (let i = 0; i < n; i++) {
+        tanMu += tanWeights[i] * mu[i];
+        for (let j = 0; j < n; j++)
+          tanVar += tanWeights[i] * tanWeights[j] * cov[i][j];
+      }
+      const tanSigma = Math.sqrt(Math.max(0, tanVar));
+      if (tanSigma > 1e-12) {
+        const calSlope = (tanMu - rf) / tanSigma;
+        return { tanMu, tanSigma, tanWeights, calSlope };
+      }
+    }
+  }
+
+  // Sweep fallback: maximise Sharpe ratio over frontier points
+  if (frontierResult && frontierResult.frontier) {
+    let bestSharpe = -Infinity, bestPt = null;
+    for (const p of frontierResult.frontier) {
+      if (p.sigma < 1e-12) continue;
+      const sharpe = (p.mu - rf) / p.sigma;
+      if (sharpe > bestSharpe) {
+        bestSharpe = sharpe;
+        bestPt = p;
+      }
+    }
+    if (bestPt && bestSharpe > 0) {
+      return {
+        tanMu: bestPt.mu,
+        tanSigma: bestPt.sigma,
+        tanWeights: bestPt.weights,
+        calSlope: bestSharpe
+      };
+    }
+  }
+
+  return null;
+}
+
+
 /* ── Update chart and display ────────────────────────────────────────── */
 
 function efUpdate() {
   const { n, mu, sigma, cov, names } = efReadInputs();
   const result = efComputeFrontier(mu, cov);
 
+  // Read risk-free inputs
+  const rfEnabled = document.getElementById('ef-rf-enable')?.checked || false;
+  const rfRate = (parseFloat(document.getElementById('ef-rf-rate')?.value) || 0) / 100;
+
   if (!result) {
-    // Singular matrix or degenerate case
     const ctx = document.getElementById('ef-chart').getContext('2d');
     if (efChart) efChart.destroy();
     efChart = null;
     document.getElementById('ef-mvp-info').innerHTML =
       '<div class="warning-box">Could not compute frontier. Check that standard deviations are positive and the correlation matrix is valid.</div>';
+    document.getElementById('ef-tangency-info').innerHTML = '';
     return;
   }
 
   const { frontier, mvpMu, mvpSigma } = result;
+
+  // Compute tangency if risk-free enabled
+  let tangency = null;
+  if (rfEnabled) {
+    tangency = efComputeTangency(mu, cov, rfRate, result);
+  }
 
   // Split into efficient (upper) and inefficient (lower) branches
   const efficient = frontier.filter(p => p.mu >= mvpMu - 1e-10);
@@ -383,6 +457,40 @@ function efUpdate() {
     order: 3
   });
 
+  // CAL line and tangency point (when risk-free enabled)
+  if (rfEnabled && tangency) {
+    // Extend CAL past tangency to 1.5× the tangency sigma
+    const calMaxSigma = Math.max(tangency.tanSigma * 1.8, Math.max(...sigma) * 1.3);
+    datasets.push({
+      label: 'Capital Allocation Line',
+      data: [
+        { x: 0, y: rfRate * 100 },
+        { x: calMaxSigma * 100, y: (rfRate + tangency.calSlope * calMaxSigma) * 100 }
+      ],
+      borderColor: COLORS.red,
+      borderDash: [8, 4],
+      pointRadius: 0,
+      showLine: true,
+      borderWidth: 2.5,
+      tension: 0,
+      fill: false,
+      order: 4
+    });
+
+    // Tangency point
+    datasets.push({
+      label: 'Tangency Portfolio',
+      data: [{ x: tangency.tanSigma * 100, y: tangency.tanMu * 100 }],
+      backgroundColor: COLORS.red,
+      borderColor: '#fff',
+      borderWidth: 2,
+      pointRadius: 9,
+      pointStyle: 'star',
+      showLine: false,
+      order: 0
+    });
+  }
+
   // Individual assets
   for (let i = 0; i < n; i++) {
     datasets.push({
@@ -424,9 +532,9 @@ function efUpdate() {
       },
       tooltip: {
         callbacks: {
-          label: function(ctx) {
-            const ds = ctx.dataset;
-            const pt = ctx.parsed;
+          label: function(tipCtx) {
+            const ds = tipCtx.dataset;
+            const pt = tipCtx.parsed;
             let text = `${ds.label}: σ = ${pt.x.toFixed(2)}%, E[R] = ${pt.y.toFixed(2)}%`;
 
             // Show weights for frontier points
@@ -437,7 +545,6 @@ function efUpdate() {
                 const wStr = w.map((wi, k) => `${names[k]}: ${(wi * 100).toFixed(1)}%`).join(', ');
                 text += `  [${wStr}]`;
               } else {
-                // Find closest frontier point by return
                 const targetMu = pt.y / 100;
                 let best = result.frontier[0];
                 for (const fp of result.frontier) {
@@ -447,6 +554,18 @@ function efUpdate() {
                 text += `  [${wStr}]`;
               }
             }
+
+            // Show weights for tangency point
+            if (ds.label === 'Tangency Portfolio' && tangency) {
+              const wStr = tangency.tanWeights.map((wi, k) => `${names[k]}: ${(wi * 100).toFixed(1)}%`).join(', ');
+              text += `  [${wStr}]`;
+            }
+
+            // Show Sharpe ratio on CAL hover
+            if (ds.label === 'Capital Allocation Line' && tangency) {
+              text += `  (Sharpe = ${tangency.calSlope.toFixed(3)})`;
+            }
+
             return text;
           }
         }
@@ -485,7 +604,6 @@ function efUpdate() {
   if (result.analytical) {
     mvpWeights = result.g.map((gi, k) => gi + result.h[k] * mvpMu);
   } else {
-    // Find the MVP point in the sweep data
     let best = result.frontier[0];
     for (const fp of result.frontier) { if (fp.sigma < best.sigma) best = fp; }
     mvpWeights = best.weights;
@@ -500,4 +618,24 @@ function efUpdate() {
       ${mvpWeights.map((w, i) => `<span class="ef-weight">${names[i]}: ${(w * 100).toFixed(1)}%</span>`).join(' &nbsp; ')}
     </div>`;
   document.getElementById('ef-mvp-info').innerHTML = mvpHtml;
+
+  // ── Tangency info ──
+  const tangencyEl = document.getElementById('ef-tangency-info');
+  if (!rfEnabled) {
+    tangencyEl.innerHTML = '';
+  } else if (!tangency) {
+    tangencyEl.innerHTML =
+      '<div class="warning-box" style="margin-top:0.75rem">Risk-free rate is too high — no tangency portfolio exists (r<sub>f</sub> ≥ all asset expected returns).</div>';
+  } else {
+    const sharpe = tangency.calSlope;
+    tangencyEl.innerHTML = `
+      <div class="metric" style="margin-top:0.75rem;background:#fde8e8">
+        <div class="metric-label">Tangency Portfolio (Max Sharpe)</div>
+        <div class="metric-value" style="color:${COLORS.red}">E[R] = ${(tangency.tanMu * 100).toFixed(2)}% &nbsp; σ = ${(tangency.tanSigma * 100).toFixed(2)}% &nbsp; Sharpe = ${sharpe.toFixed(3)}</div>
+      </div>
+      <div style="margin-top:0.5rem">
+        <strong>Tangency Weights:</strong>
+        ${tangency.tanWeights.map((w, i) => `<span class="ef-weight">${names[i]}: ${(w * 100).toFixed(1)}%</span>`).join(' &nbsp; ')}
+      </div>`;
+  }
 }

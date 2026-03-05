@@ -475,7 +475,22 @@
       <div id="ef-corr-inputs"></div>
 
       <hr class="scenario-divider">
+      <h2>Risk-Free Asset</h2>
+      <div class="ef-riskfree-row">
+        <label>
+          <input type="checkbox" id="ef-rf-enable" onchange="efUpdate()">
+          Enable risk-free asset
+        </label>
+        <div class="input-group" style="margin-bottom:0">
+          <input type="number" id="ef-rf-rate" value="2" step="0.5" min="0" max="50"
+                 style="width:80px" oninput="efUpdate()">
+        </div>
+        <span style="font-size:0.85rem;color:#495057">r<sub>f</sub> (%)</span>
+      </div>
+
+      <hr class="scenario-divider">
       <div id="ef-mvp-info"></div>
+      <div id="ef-tangency-info"></div>
     </div>
 
     <div class="chart-panel">
@@ -559,11 +574,45 @@
         <div class="formula-block" id="ef-deriv-mvp"></div>
       </div>
 
+      <h3 style="margin-top:1.5rem">Capital Allocation Line &amp; Tangency Portfolio</h3>
+
+      <p>When investors can also hold a <strong>risk-free asset</strong> (earning return <span id="ef-deriv-rf-inline"></span>),
+         the set of efficient portfolios changes dramatically.</p>
+
+      <div class="derivation-step">
+        <p><strong>Sharpe Ratio.</strong> The reward-to-risk measure for any portfolio is:</p>
+        <div class="formula-block" id="ef-deriv-sharpe"></div>
+      </div>
+
+      <div class="derivation-step">
+        <p><strong>Tangency Portfolio.</strong> The portfolio on the risky-asset frontier that maximises the Sharpe ratio
+           is called the <em>tangency portfolio</em>. Its weights are:</p>
+        <div class="formula-block" id="ef-deriv-tan-weights"></div>
+        <p>The numerator tilts toward assets with high excess return; the denominator normalises so that
+           weights sum to one.</p>
+      </div>
+
+      <div class="derivation-step">
+        <p><strong>Capital Allocation Line (CAL).</strong> Any combination of the risk-free asset and the
+           tangency portfolio traces a straight line in (&sigma;, E[R]) space:</p>
+        <div class="formula-block" id="ef-deriv-cal"></div>
+        <p>This line has the steepest slope of any line from <span id="ef-deriv-rf-inline2"></span> to the frontier, which is
+           why the tangency portfolio maximises the Sharpe ratio.</p>
+      </div>
+
+      <div class="derivation-step">
+        <p><strong>Two-Fund Separation.</strong> Every efficient portfolio (with a risk-free asset) is a blend of
+           just two funds: the risk-free asset and the tangency portfolio. This is one of the most powerful
+           results in portfolio theory.</p>
+      </div>
+
       <h3 style="margin-top:1rem">Try This</h3>
       <ol>
         <li>Start with 2 assets and change the correlation from +1 to &minus;1. Watch the frontier bend left.</li>
         <li>Add a 3rd asset with low correlation to the others. See how the frontier shifts.</li>
         <li>Hover over the frontier curve to see the portfolio weights at each point.</li>
+        <li>Enable the risk-free asset and see how the CAL extends from r<sub>f</sub> through the tangency portfolio.</li>
+        <li>Raise r<sub>f</sub> until it exceeds all asset returns &mdash; the tangency portfolio becomes infeasible.</li>
       </ol>
     </div>
   </details>
@@ -659,6 +708,19 @@ document.addEventListener('DOMContentLoaded', function() {
     katex.render(
       '\\mu_{\\text{MVP}} = \\frac{A}{C}, \\qquad \\sigma^2_{\\text{MVP}} = \\frac{1}{C}',
       document.getElementById('ef-deriv-mvp'), efBlock);
+
+    // CAL & Tangency derivation formulas
+    katex.render('r_f', document.getElementById('ef-deriv-rf-inline'), efInline);
+    katex.render('r_f', document.getElementById('ef-deriv-rf-inline2'), efInline);
+    katex.render(
+      '\\text{Sharpe Ratio} = \\frac{E[R_p] - r_f}{\\sigma_p}',
+      document.getElementById('ef-deriv-sharpe'), efBlock);
+    katex.render(
+      '\\mathbf{w}_{\\text{tan}} = \\frac{\\boldsymbol{\\Sigma}^{-1}(\\boldsymbol{\\mu} - r_f \\mathbf{1})}{\\mathbf{1}^\\top \\boldsymbol{\\Sigma}^{-1}(\\boldsymbol{\\mu} - r_f \\mathbf{1})}',
+      document.getElementById('ef-deriv-tan-weights'), efBlock);
+    katex.render(
+      'E[R_p] = r_f + \\frac{E[R_{\\text{tan}}] - r_f}{\\sigma_{\\text{tan}}} \\cdot \\sigma_p',
+      document.getElementById('ef-deriv-cal'), efBlock);
 
     // Initialize all calculators
     fvUpdate();
