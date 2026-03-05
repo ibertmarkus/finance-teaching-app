@@ -485,10 +485,9 @@ function efUpdate() {
       data: [{ x: tangency.tanSigma * 100, y: tangency.tanMu * 100 }],
       backgroundColor: COLORS.red,
       borderColor: COLORS.red,
-      borderWidth: 2,
-      pointRadius: 9,
-      pointStyle: 'star',
-      pointBorderColor: '#fff',
+      borderWidth: 1,
+      pointRadius: 10,
+      pointStyle: 'rectRot',
       showLine: false,
       order: 0
     });
