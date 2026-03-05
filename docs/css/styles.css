@@ -487,6 +487,33 @@ details .details-content {
   box-shadow: 0 0 0 3px rgba(26, 115, 232, 0.15);
 }
 
+/* ===== CAPM Specific ===== */
+.capm-asset-row {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+  align-items: flex-end;
+}
+
+.capm-asset-row .input-group {
+  margin-bottom: 0;
+}
+
+.capm-asset-row input[type="text"],
+.capm-asset-row input[type="number"] {
+  width: 100%;
+  padding: 0.4rem 0.6rem;
+  border: 1px solid #ced4da;
+  border-radius: 6px;
+  font-size: 0.9rem;
+}
+
+.capm-asset-row input:focus {
+  outline: none;
+  border-color: #1a73e8;
+  box-shadow: 0 0 0 3px rgba(26, 115, 232, 0.15);
+}
+
 /* ===== Embed mode ===== */
 body.embed .tab-nav {
   display: none;

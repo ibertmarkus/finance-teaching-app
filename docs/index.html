@@ -24,6 +24,7 @@
   <script src="js/perpetuity.js"></script>
   <script src="js/irr.js"></script>
   <script src="js/efficient-frontier.js"></script>
+  <script src="js/capm.js"></script>
 </head>
 <body>
 
@@ -38,6 +39,7 @@
   <button data-tab="tab-irr">IRR</button>
   <span class="nav-group-label">Lecture 5: Risk &amp; Return</span>
   <button data-tab="tab-ef">Efficient Frontier</button>
+  <button data-tab="tab-capm">CAPM</button>
 </nav>
 
 <!-- ============================================================ -->
@@ -618,6 +620,99 @@
   </details>
 </section>
 
+<!-- ============================================================ -->
+<!-- TAB 7: CAPM                                                  -->
+<!-- ============================================================ -->
+<section id="tab-capm" class="tab-panel">
+  <div class="page-header">
+    <h1>Capital Asset Pricing Model (CAPM)</h1>
+    <p>The CAPM determines the expected return of an asset based on its systematic risk (&beta;).
+       Assets that plot above the Security Market Line are undervalued; those below are overvalued.</p>
+  </div>
+
+  <div class="two-col" style="margin-top:1.5rem">
+    <div class="input-panel">
+      <h2>Market Parameters</h2>
+      <div class="input-group">
+        <label>Risk-Free Rate r<sub>f</sub> (%)</label>
+        <input type="number" id="capm-rf" value="3" step="0.5" min="0" max="50" oninput="capmUpdate()">
+      </div>
+      <div class="input-group">
+        <label>Market Expected Return E[R<sub>m</sub>] (%)</label>
+        <input type="number" id="capm-erm" value="10" step="0.5" min="-50" max="100" oninput="capmUpdate()">
+      </div>
+      <div class="metric">
+        <div class="metric-label">Market Risk Premium (E[R<sub>m</sub>] &minus; r<sub>f</sub>)</div>
+        <div class="metric-value" id="capm-mrp">&mdash;</div>
+      </div>
+
+      <hr class="scenario-divider">
+      <h2>Assets</h2>
+      <div class="input-group">
+        <label>Number of Assets</label>
+        <div style="display:flex;gap:0.5rem;align-items:center">
+          <button class="btn" onclick="capmChangeAssets(-1)">&minus;</button>
+          <input type="number" id="capm-num-assets" value="3" min="2" max="8" step="1"
+                 style="width:70px;text-align:center" oninput="capmBuildInputs()">
+          <button class="btn" onclick="capmChangeAssets(1)">+</button>
+        </div>
+      </div>
+
+      <div id="capm-asset-inputs"></div>
+
+      <hr class="scenario-divider">
+      <h3 style="font-size:1rem;margin-bottom:0.5rem">Results</h3>
+      <div id="capm-results"></div>
+    </div>
+
+    <div class="chart-panel">
+      <div style="position:relative;height:450px"><canvas id="capm-chart"></canvas></div>
+    </div>
+  </div>
+
+  <details>
+    <summary>Understanding the CAPM</summary>
+    <div class="details-content">
+      <h3>The CAPM Equation</h3>
+      <div class="formula-block" id="capm-formula-main"></div>
+      <p>The expected return on any asset equals the risk-free rate plus a risk premium
+         proportional to the asset's beta.</p>
+
+      <h3 style="margin-top:1rem">Beta (&beta;)</h3>
+      <div class="formula-block" id="capm-formula-beta"></div>
+      <ul>
+        <li><strong>&beta; = 1</strong>: The asset moves with the market (same systematic risk)</li>
+        <li><strong>&beta; &gt; 1</strong>: More volatile than the market (amplifies market movements)</li>
+        <li><strong>&beta; &lt; 1</strong>: Less volatile than the market (dampens market movements)</li>
+        <li><strong>&beta; = 0</strong>: No systematic risk &mdash; expected return equals r<sub>f</sub></li>
+        <li><strong>&beta; &lt; 0</strong>: Moves opposite to the market (hedging asset)</li>
+      </ul>
+
+      <h3 style="margin-top:1rem">Security Market Line (SML)</h3>
+      <p>The SML plots expected return E[R] against beta (&beta;). It is a straight line from
+         (0, r<sub>f</sub>) through (1, E[R<sub>m</sub>]). All correctly priced assets should lie
+         exactly on this line.</p>
+
+      <h3 style="margin-top:1rem">Jensen's Alpha</h3>
+      <div class="formula-block" id="capm-formula-alpha"></div>
+      <ul>
+        <li><strong>&alpha; &gt; 0</strong>: Asset lies <em>above</em> the SML &rarr; <strong>undervalued</strong> (earning more than CAPM predicts)</li>
+        <li><strong>&alpha; &lt; 0</strong>: Asset lies <em>below</em> the SML &rarr; <strong>overvalued</strong> (earning less than CAPM predicts)</li>
+        <li><strong>&alpha; &approx; 0</strong>: Asset lies on the SML &rarr; <strong>fairly priced</strong></li>
+      </ul>
+
+      <h3 style="margin-top:1.5rem">Try This</h3>
+      <ol>
+        <li>Look at the default assets: which are above the SML and which are below?</li>
+        <li>Increase the risk-free rate &mdash; watch the SML pivot and alphas change.</li>
+        <li>Set an asset's observed return equal to its CAPM expected return to see it land on the SML.</li>
+        <li>Try a negative beta &mdash; the SML extends left and the asset has a lower expected return than r<sub>f</sub>.</li>
+        <li>Add more assets to see a richer scatter plot around the SML.</li>
+      </ol>
+    </div>
+  </details>
+</section>
+
 <!-- ===== Initialization ===== -->
 <script>
 document.addEventListener('DOMContentLoaded', function() {
@@ -722,6 +817,23 @@ document.addEventListener('DOMContentLoaded', function() {
       'E[R_p] = r_f + \\frac{E[R_{\\text{tan}}] - r_f}{\\sigma_{\\text{tan}}} \\cdot \\sigma_p',
       document.getElementById('ef-deriv-cal'), efBlock);
 
+    // CAPM formulas
+    katex.render(
+      'E[R_i] = r_f + \\beta_i \\bigl(E[R_m] - r_f\\bigr)',
+      document.getElementById('capm-formula-main'),
+      { displayMode: true }
+    );
+    katex.render(
+      '\\alpha_i = R_i^{\\text{obs}} - E[R_i]',
+      document.getElementById('capm-formula-alpha'),
+      { displayMode: true }
+    );
+    katex.render(
+      '\\beta_i = \\frac{\\text{Cov}(R_i, R_m)}{\\text{Var}(R_m)}',
+      document.getElementById('capm-formula-beta'),
+      { displayMode: true }
+    );
+
     // Initialize all calculators
     fvUpdate();
     pvUpdate();
@@ -729,6 +841,7 @@ document.addEventListener('DOMContentLoaded', function() {
     perpUpdate();
     irrBuildInputs(); // also calls irrUpdate()
     efBuildInputs();  // also calls efUpdate()
+    capmBuildInputs(); // also calls capmUpdate()
   }
 
   init();
