@@ -25,6 +25,7 @@
   <script src="js/irr.js"></script>
   <script src="js/efficient-frontier.js"></script>
   <script src="js/capm.js"></script>
+  <script src="js/mm.js"></script>
 </head>
 <body>
 
@@ -40,6 +41,8 @@
   <span class="nav-group-label">Lecture 5: Risk &amp; Return</span>
   <button data-tab="tab-ef">Efficient Frontier</button>
   <button data-tab="tab-capm">CAPM</button>
+  <span class="nav-group-label">Lecture 8: Capital Structure</span>
+  <button data-tab="tab-mm">MM Propositions</button>
 </nav>
 
 <!-- ============================================================ -->
@@ -713,6 +716,94 @@
   </details>
 </section>
 
+<!-- ============================================================ -->
+<!-- TAB 8: MODIGLIANI-MILLER                                     -->
+<!-- ============================================================ -->
+<section id="tab-mm" class="tab-panel">
+  <div class="page-header">
+    <h1>Modigliani-Miller Propositions I and II</h1>
+    <p>
+      Explore how leverage affects firm value, the cost of equity, and the WACC.
+      Set the corporate tax rate to zero to recover the no-tax MM case.
+    </p>
+  </div>
+
+  <div class="two-col" style="margin-top:1.5rem">
+    <div class="input-panel">
+      <h2>Parameters</h2>
+      <div class="input-group">
+        <label>Expected Return on Assets r<sub>A</sub> (%)</label>
+        <input type="number" id="mm-ra" value="12.5" step="0.1" min="0" max="50" oninput="mmUpdate()">
+      </div>
+      <div class="input-group">
+        <label>Before-Tax Cost of Debt r<sub>D</sub> (%)</label>
+        <input type="number" id="mm-rd" value="10" step="0.1" min="0" max="50" oninput="mmUpdate()">
+      </div>
+      <div class="input-group">
+        <label>Corporate Tax Rate T<sub>C</sub> (%)</label>
+        <input type="number" id="mm-tax" value="21" step="1" min="0" max="100" oninput="mmUpdate()">
+      </div>
+      <div class="input-group">
+        <label>Selected Debt-Equity Ratio D/E</label>
+        <input type="number" id="mm-de" value="0.86" step="0.01" min="0" max="3" oninput="mmUpdate()">
+      </div>
+      <div class="input-group">
+        <label>Chart Max D/E</label>
+        <input type="number" id="mm-max-de" value="1" step="0.1" min="0.2" max="4" oninput="mmUpdate()">
+      </div>
+      <div class="input-group">
+        <label>Unlevered Firm Value V<sub>U</sub> ($)</label>
+        <input type="number" id="mm-vu" value="100" step="5" min="1" max="1000000" oninput="mmUpdate()">
+      </div>
+
+      <div class="metric">
+        <div class="metric-label">Expected Return on Equity r<sub>E</sub></div>
+        <div class="metric-value" id="mm-re-result">&mdash;</div>
+      </div>
+      <div class="metric" style="margin-top:0.75rem">
+        <div class="metric-label">WACC</div>
+        <div class="metric-value" id="mm-wacc-result">&mdash;</div>
+      </div>
+      <div class="metric" style="margin-top:0.75rem">
+        <div class="metric-label">Levered Firm Value V<sub>L</sub></div>
+        <div class="metric-value" id="mm-vl-result">&mdash;</div>
+      </div>
+      <div class="metric" style="margin-top:0.75rem">
+        <div class="metric-label">PV of Tax Shield</div>
+        <div class="metric-value" id="mm-tax-shield-result">&mdash;</div>
+      </div>
+    </div>
+
+    <div class="chart-panel">
+      <div style="position:relative;height:450px"><canvas id="mm-chart"></canvas></div>
+    </div>
+  </div>
+
+  <div class="formula-section" style="margin-top:1.5rem">
+    <h3>Key Equations</h3>
+    <div class="mm-formula-grid">
+      <div class="formula-block" id="mm-formula-value-no-tax"></div>
+      <div class="formula-block" id="mm-formula-equity-no-tax"></div>
+      <div class="formula-block" id="mm-formula-value-tax"></div>
+      <div class="formula-block" id="mm-formula-equity-tax"></div>
+      <div class="formula-block" id="mm-formula-wacc-tax"></div>
+    </div>
+    <div class="formula-block" id="mm-formula-current"></div>
+    <p id="mm-summary-text" class="mm-summary-text"></p>
+    <div id="mm-results-table"></div>
+  </div>
+
+  <details>
+    <summary>How to Read the Graph</summary>
+    <div class="details-content">
+      <p>The green line shows the cost of equity, which rises with leverage because equity becomes riskier.</p>
+      <p>The orange line shows the WACC. With corporate taxes, it slopes downward because interest creates a tax shield.</p>
+      <p>The dashed gray line is r<sub>A</sub>, the return on assets. When T<sub>C</sub> = 0, the WACC collapses to this flat line, which is the no-tax MM Proposition I result.</p>
+      <p>The selected D/E ratio is marked with a vertical guide so you can match the graph to the numerical outputs below it.</p>
+    </div>
+  </details>
+</section>
+
 <!-- ===== Initialization ===== -->
 <script>
 document.addEventListener('DOMContentLoaded', function() {
@@ -834,6 +925,33 @@ document.addEventListener('DOMContentLoaded', function() {
       { displayMode: true }
     );
 
+    // MM formulas
+    katex.render(
+      'V_L = V_U',
+      document.getElementById('mm-formula-value-no-tax'),
+      { displayMode: true }
+    );
+    katex.render(
+      'r_E = r_A + \\frac{D}{E}(r_A - r_D)',
+      document.getElementById('mm-formula-equity-no-tax'),
+      { displayMode: true }
+    );
+    katex.render(
+      'V_L = V_U + T_C D',
+      document.getElementById('mm-formula-value-tax'),
+      { displayMode: true }
+    );
+    katex.render(
+      'r_E = r_A + \\frac{D}{E}(1 - T_C)(r_A - r_D)',
+      document.getElementById('mm-formula-equity-tax'),
+      { displayMode: true }
+    );
+    katex.render(
+      '\\mathrm{WACC} = \\frac{E}{V}r_E + \\frac{D}{V}r_D(1 - T_C) = r_A\\left(1 - T_C\\frac{D}{V}\\right)',
+      document.getElementById('mm-formula-wacc-tax'),
+      { displayMode: true }
+    );
+
     // Initialize all calculators
     fvUpdate();
     pvUpdate();
@@ -842,6 +960,7 @@ document.addEventListener('DOMContentLoaded', function() {
     irrBuildInputs(); // also calls irrUpdate()
     efBuildInputs();  // also calls efUpdate()
     capmBuildInputs(); // also calls capmUpdate()
+    mmUpdate();
   }
 
   init();

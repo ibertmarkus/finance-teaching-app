@@ -514,6 +514,20 @@ details .details-content {
   box-shadow: 0 0 0 3px rgba(26, 115, 232, 0.15);
 }
 
+/* ===== MM Specific ===== */
+.mm-formula-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 0.75rem 1rem;
+  align-items: start;
+}
+
+.mm-summary-text {
+  margin: 0.5rem 0 1rem;
+  font-size: 0.95rem;
+  color: #495057;
+}
+
 /* ===== Embed mode ===== */
 body.embed .tab-nav {
   display: none;
