@@ -781,15 +781,43 @@
 
   <div class="formula-section" style="margin-top:1.5rem">
     <h3>Key Equations</h3>
-    <div class="mm-formula-grid">
-      <div class="formula-block" id="mm-formula-value-no-tax"></div>
-      <div class="formula-block" id="mm-formula-equity-no-tax"></div>
-      <div class="formula-block" id="mm-formula-value-tax"></div>
-      <div class="formula-block" id="mm-formula-equity-tax"></div>
-      <div class="formula-block" id="mm-formula-wacc-tax"></div>
-    </div>
-    <div class="formula-block" id="mm-formula-current"></div>
     <p id="mm-summary-text" class="mm-summary-text"></p>
+
+    <div class="mm-equation-layout">
+      <div class="mm-equation-card">
+        <h4>Classic MM: No Taxes</h4>
+        <p>Use this case when the corporate tax rate is set to zero.</p>
+        <div class="formula-block" id="mm-formula-value-no-tax"></div>
+        <div class="formula-block" id="mm-formula-equity-no-tax"></div>
+      </div>
+
+      <div class="mm-equation-card">
+        <h4>MM with Corporate Taxes</h4>
+        <p>Interest tax shields increase firm value and reduce the WACC.</p>
+        <div class="formula-block" id="mm-formula-value-tax"></div>
+        <div class="formula-block" id="mm-formula-equity-tax"></div>
+        <div class="formula-block" id="mm-formula-wacc-tax"></div>
+      </div>
+    </div>
+
+    <div class="mm-current-card">
+      <h4 id="mm-current-title">Current Calculation</h4>
+      <div class="mm-current-grid">
+        <div class="mm-current-item">
+          <div class="mm-current-label">Firm Value</div>
+          <div class="formula-block" id="mm-formula-current-value"></div>
+        </div>
+        <div class="mm-current-item">
+          <div class="mm-current-label">Cost of Equity</div>
+          <div class="formula-block" id="mm-formula-current-equity"></div>
+        </div>
+        <div class="mm-current-item">
+          <div class="mm-current-label">Weighted Average Cost of Capital</div>
+          <div class="formula-block" id="mm-formula-current-wacc"></div>
+        </div>
+      </div>
+    </div>
+
     <div id="mm-results-table"></div>
   </div>
 

@@ -515,17 +515,63 @@ details .details-content {
 }
 
 /* ===== MM Specific ===== */
-.mm-formula-grid {
+.mm-equation-layout {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-  gap: 0.75rem 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1rem;
   align-items: start;
 }
 
+.mm-equation-card,
+.mm-current-card {
+  background: #f8f9fa;
+  border: 1px solid #dee2e6;
+  border-radius: 8px;
+  padding: 1rem 1.1rem;
+}
+
+.mm-equation-card h4,
+.mm-current-card h4 {
+  font-size: 1rem;
+  font-weight: 600;
+  margin-bottom: 0.35rem;
+}
+
+.mm-equation-card p {
+  font-size: 0.9rem;
+  color: #5f6368;
+  margin-bottom: 0.6rem;
+}
+
+.mm-current-card {
+  margin-top: 1rem;
+}
+
+.mm-current-grid {
+  display: grid;
+  gap: 0.9rem;
+}
+
+.mm-current-item {
+  padding-top: 0.15rem;
+}
+
+.mm-current-label {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #495057;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
 .mm-summary-text {
-  margin: 0.5rem 0 1rem;
+  margin: 0.25rem 0 1rem;
   font-size: 0.95rem;
   color: #495057;
+}
+
+#mm-results-table {
+  margin-top: 1rem;
 }
 
 /* ===== Embed mode ===== */

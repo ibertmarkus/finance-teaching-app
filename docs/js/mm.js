@@ -147,8 +147,11 @@ function mmUpdateSummary(inputs, point) {
 }
 
 function mmRenderCurrentFormula(inputs, point) {
-  const target = document.getElementById('mm-formula-current');
-  if (!target || typeof katex === 'undefined') return;
+  const titleEl = document.getElementById('mm-current-title');
+  const valueTarget = document.getElementById('mm-formula-current-value');
+  const equityTarget = document.getElementById('mm-formula-current-equity');
+  const waccTarget = document.getElementById('mm-formula-current-wacc');
+  if (!valueTarget || !equityTarget || !waccTarget || typeof katex === 'undefined') return;
 
   const taxRate = inputs.taxRate;
   const de = inputs.de;
@@ -162,11 +165,13 @@ function mmRenderCurrentFormula(inputs, point) {
 
   const waccFormula = `\\mathrm{WACC} = ${point.equityWeight.toFixed(3)} \\times ${point.equityReturn.toFixed(2)}\\% + ${point.debtWeight.toFixed(3)} \\times ${inputs.rd.toFixed(2)}\\% \\times (1-${taxRate.toFixed(2)}) = ${point.wacc.toFixed(2)}\\%`;
 
-  katex.render(
-    `\\begin{aligned}${valueFormula}\\\\[4pt]${equityFormula}\\\\[4pt]${waccFormula}\\end{aligned}`,
-    target,
-    { displayMode: true }
-  );
+  if (titleEl) {
+    titleEl.textContent = `Current Calculation at D/E = ${inputs.de.toFixed(2)} and T_C = ${inputs.taxPct.toFixed(0)}%`;
+  }
+
+  katex.render(valueFormula, valueTarget, { displayMode: true });
+  katex.render(equityFormula, equityTarget, { displayMode: true });
+  katex.render(waccFormula, waccTarget, { displayMode: true });
 }
 
 function mmBuildChart(inputs, point, series) {
