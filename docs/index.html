@@ -26,6 +26,7 @@
   <script src="js/efficient-frontier.js"></script>
   <script src="js/capm.js"></script>
   <script src="js/mm.js"></script>
+  <script src="js/black-scholes.js"></script>
 </head>
 <body>
 
@@ -43,6 +44,8 @@
   <button data-tab="tab-capm">CAPM</button>
   <span class="nav-group-label">Lecture 8: Capital Structure</span>
   <button data-tab="tab-mm">MM Propositions</button>
+  <span class="nav-group-label">Lecture 12: Option Pricing</span>
+  <button data-tab="tab-bs">Black-Scholes</button>
 </nav>
 
 <!-- ============================================================ -->
@@ -832,6 +835,146 @@
   </details>
 </section>
 
+<!-- ============================================================ -->
+<!-- TAB 9: BLACK-SCHOLES                                         -->
+<!-- ============================================================ -->
+<section id="tab-bs" class="tab-panel">
+  <div class="page-header">
+    <h1>Black-Scholes: Intuition for Option Pricing</h1>
+    <p>Use this tab to show how option values depend on the stock price, the strike, time to maturity, and volatility. The formulas are tucked into the footnote at the bottom.</p>
+  </div>
+
+  <div class="bs-concept-grid">
+    <div class="bs-concept-card">
+      <h3>Payoff versus price today</h3>
+      <p>At expiration the option is either worth exercising or not. Before expiration it also has time value because the stock can still move.</p>
+    </div>
+    <div class="bs-concept-card">
+      <h3>Moneyness matters</h3>
+      <p>Calls become more valuable when the stock sits above the strike. Puts become more valuable when the stock sits below it.</p>
+    </div>
+    <div class="bs-concept-card">
+      <h3>Uncertainty has value</h3>
+      <p>Higher volatility raises both call and put prices because the option holder keeps the upside but cannot lose more than zero at maturity.</p>
+    </div>
+  </div>
+
+  <div class="two-col" style="margin-top:1.5rem">
+    <div class="input-panel">
+      <h2>Parameters</h2>
+
+      <div class="input-group">
+        <label>Current Stock Price ($)</label>
+        <input type="number" id="bs-s" value="100" min="1" max="100000" step="1" oninput="bsUpdate()">
+      </div>
+      <div class="input-group">
+        <label>Strike Price ($)</label>
+        <input type="number" id="bs-k" value="100" min="1" max="100000" step="1" oninput="bsUpdate()">
+      </div>
+      <div class="input-group">
+        <label>Time to Maturity (years)</label>
+        <input type="number" id="bs-t" value="1" min="0" max="10" step="0.05" oninput="bsUpdate()">
+      </div>
+      <div class="input-group">
+        <label>Risk-Free Rate (%)</label>
+        <input type="number" id="bs-r" value="4" min="-5" max="25" step="0.25" oninput="bsUpdate()">
+      </div>
+      <div class="input-group">
+        <label>Volatility (%)</label>
+        <input type="number" id="bs-sigma" value="25" min="0" max="250" step="1" oninput="bsUpdate()">
+      </div>
+
+      <div class="bs-presets">
+        <button type="button" class="btn" onclick="bsApplyPreset('atm')">ATM</button>
+        <button type="button" class="btn" onclick="bsApplyPreset('itmCall')">ITM Call</button>
+        <button type="button" class="btn" onclick="bsApplyPreset('highVol')">High Vol</button>
+        <button type="button" class="btn" onclick="bsApplyPreset('nearExpiry')">Near Expiry</button>
+      </div>
+
+      <div class="bs-metric-grid">
+        <div class="metric">
+          <div class="metric-label">Call Value Today</div>
+          <div class="metric-value" id="bs-call-result">&mdash;</div>
+        </div>
+        <div class="metric">
+          <div class="metric-label">Put Value Today</div>
+          <div class="metric-value" id="bs-put-result">&mdash;</div>
+        </div>
+        <div class="metric">
+          <div class="metric-label">Call Intrinsic Value</div>
+          <div class="metric-value" id="bs-call-intrinsic-result">&mdash;</div>
+        </div>
+        <div class="metric">
+          <div class="metric-label">Put Intrinsic Value</div>
+          <div class="metric-value" id="bs-put-intrinsic-result">&mdash;</div>
+        </div>
+      </div>
+
+      <p id="bs-summary-text" class="bs-summary-text"></p>
+    </div>
+
+    <div class="chart-panel bs-chart-panel">
+      <div class="bs-chart-stack">
+        <div class="bs-chart-block">
+          <h3>Option Value Today</h3>
+          <p>The solid lines are Black-Scholes prices. The dashed lines are intrinsic value only, so the gap between them is time value.</p>
+          <div style="position:relative;height:320px"><canvas id="bs-value-chart"></canvas></div>
+        </div>
+
+        <div class="bs-chart-block">
+          <h3>Payoff at Expiration</h3>
+          <p>This removes time value and leaves only the payoff at maturity, which is what students usually see first in a finance class.</p>
+          <div style="position:relative;height:320px"><canvas id="bs-payoff-chart"></canvas></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="formula-section" style="margin-top:1.5rem">
+    <h3>Classroom Suggestions</h3>
+    <div class="bs-insight-grid">
+      <div class="bs-insight-card">
+        <h4>Move the Stock Price</h4>
+        <p id="bs-insight-stock"></p>
+      </div>
+      <div class="bs-insight-card">
+        <h4>Raise Volatility</h4>
+        <p id="bs-insight-vol"></p>
+      </div>
+      <div class="bs-insight-card">
+        <h4>Let Time Run Out</h4>
+        <p id="bs-insight-time"></p>
+      </div>
+    </div>
+  </div>
+
+  <details class="bs-footnote">
+    <summary>Footnote: Black-Scholes Math Details and Assumptions</summary>
+    <div class="details-content">
+      <p class="bs-footnote-text">This tab uses the standard Black-Scholes model for European options without dividends. For an introductory lecture, the main goal is to show the direction of the effects rather than the derivation.</p>
+
+      <div class="bs-footnote-grid">
+        <div>
+          <div class="formula-block" id="bs-formula-call"></div>
+          <div class="formula-block" id="bs-formula-put"></div>
+          <div class="formula-block" id="bs-formula-d"></div>
+        </div>
+
+        <div>
+          <p class="bs-footnote-list-title">Key assumptions</p>
+          <ul class="bs-footnote-list">
+            <li>European exercise only.</li>
+            <li>No dividends in this version.</li>
+            <li>Constant volatility and interest rate.</li>
+            <li>Frictionless trading and lognormal stock-price dynamics.</li>
+          </ul>
+          <p id="bs-footnote-current" class="bs-footnote-current"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+</section>
+
 <!-- ===== Initialization ===== -->
 <script>
 document.addEventListener('DOMContentLoaded', function() {
@@ -980,6 +1123,23 @@ document.addEventListener('DOMContentLoaded', function() {
       { displayMode: true }
     );
 
+    // Black-Scholes formulas
+    katex.render(
+      'C = S_0 N(d_1) - K e^{-rT} N(d_2)',
+      document.getElementById('bs-formula-call'),
+      { displayMode: true }
+    );
+    katex.render(
+      'P = K e^{-rT} N(-d_2) - S_0 N(-d_1)',
+      document.getElementById('bs-formula-put'),
+      { displayMode: true }
+    );
+    katex.render(
+      'd_1 = \\frac{\\ln(S_0/K) + (r + \\sigma^2/2)T}{\\sigma\\sqrt{T}}, \\qquad d_2 = d_1 - \\sigma\\sqrt{T}',
+      document.getElementById('bs-formula-d'),
+      { displayMode: true }
+    );
+
     // Initialize all calculators
     fvUpdate();
     pvUpdate();
@@ -989,6 +1149,7 @@ document.addEventListener('DOMContentLoaded', function() {
     efBuildInputs();  // also calls efUpdate()
     capmBuildInputs(); // also calls capmUpdate()
     mmUpdate();
+    bsUpdate();
   }
 
   init();
